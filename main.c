@@ -46,6 +46,10 @@ static int hello_getattr(const char *path, struct stat *stbuf,
     (void) fi;
     int res = 0;
 
+    fprintf(stderr, "uid: %d\n", fuse_get_context()->uid);
+    fprintf(stderr, "gid: %d\n", fuse_get_context()->gid);
+    fprintf(stderr, "pid: %d\n", fuse_get_context()->pid);
+
     memset(stbuf, 0, sizeof(struct stat));
     if (strcmp(path, "/") == 0) {
         stbuf->st_mode = S_IFDIR | 0755;
