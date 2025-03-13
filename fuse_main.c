@@ -204,6 +204,7 @@ static const struct fuse_operations pseudo_oper = {
 
 int main(int argc, char *argv[])
 {
+	umask(0); // Reset umask
 	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
 	const int ret = fuse_main(args.argc, args.argv, &pseudo_oper, NULL);
 	fuse_opt_free_args(&args);
