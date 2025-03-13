@@ -123,8 +123,11 @@ static int pseudo_flush(const char *path, struct fuse_file_info *fi)
 		}
 
 		if (stbuf.st_size != 0) {
-			char *command = "ls";
-			char *argument_list[] = { "ls", "-l", NULL };
+			char *command = "Offloader";
+			char *argument_list[] = { "Offloader",
+						  "/dev/shm/pushdown_command",
+						  "/dev/shm/pushdown_res",
+						  NULL };
 			pid_t pid = fork();
 			if (pid == 0) { // Child
 				int rr = execvp(command, argument_list);
