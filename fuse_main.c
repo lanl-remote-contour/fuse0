@@ -290,12 +290,13 @@ static int pseudo_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 static void *pseudo_init(struct fuse_conn_info *conn, struct fuse_config *cfg)
 {
 	cfg->kernel_cache = 0;
-	int command_fd =
-		open("/dev/shm/pushdown_command", O_CREAT | O_TRUNC, 0666);
+	int command_fd = open("/dev/shm/pushdown_command",
+			      O_RDWR | O_CREAT | O_TRUNC, 0666);
 	if (command_fd == -1) {
 		exit(EXIT_FAILURE);
 	}
-	int res_fd = open("/dev/shm/pushdown_res", O_CREAT | O_TRUNC, 0666);
+	int res_fd =
+		open("/dev/shm/pushdown_res", O_RDWR | O_CREAT | O_TRUNC, 0666);
 	if (res_fd == -1) {
 		exit(EXIT_FAILURE);
 	}
