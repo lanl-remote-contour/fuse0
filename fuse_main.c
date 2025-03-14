@@ -50,15 +50,47 @@ static int pseudo_getattr(const char *path, struct stat *stbuf,
 	return 0;
 }
 
-static int pseudo_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-			  off_t offset, struct fuse_file_info *fi,
-			  enum fuse_readdir_flags flags)
+static int pseudo_chmod(const char *path, mode_t mode,
+			struct fuse_file_info *fi)
 {
-	if (strcmp(path, "/") != 0)
+	if (fi->fh != -1) {
+		int r = fchmod(fi->fh, mode);
+		if (r != 0) {
+			return -1 * errno;
+		}
+	} else {
 		return -ENOENT;
+	}
 
-	filler(buf, "command", NULL, 0, 0);
-	filler(buf, "result", NULL, 0, 0);
+	return 0;
+}
+
+static int pseudo_chown(const char *path, uid_t uid, gid_t gid,
+			struct fuse_file_info *fi)
+{
+	if (fi->fh != -1) {
+		int r = fchown(fi->fh, uid, gid);
+		if (r != 0) {
+			return -1 * errno;
+		}
+	} else {
+		return -ENOENT;
+	}
+
+	return 0;
+}
+
+static int pseudo_truncate(const char *path, off_t off,
+			   struct fuse_file_info *fi)
+{
+	if (fi->fh != -1) {
+		int r = ftruncate(fi->fh, off);
+		if (r != 0) {
+			return -1 * errno;
+		}
+	} else {
+		return -ENOENT;
+	}
 
 	return 0;
 }
@@ -215,6 +247,19 @@ static int pseudo_getxattr(const char *path, const char *name, char *value,
 	return 0;
 }
 
+static int pseudo_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+			  off_t offset, struct fuse_file_info *fi,
+			  enum fuse_readdir_flags flags)
+{
+	if (strcmp(path, "/") != 0)
+		return -ENOENT;
+
+	filler(buf, "command", NULL, 0, 0);
+	filler(buf, "result", NULL, 0, 0);
+
+	return 0;
+}
+
 static void *pseudo_init(struct fuse_conn_info *conn, struct fuse_config *cfg)
 {
 	cfg->kernel_cache = 0;
@@ -248,6 +293,9 @@ static void pseudo_destroy(void *private_data)
 
 static const struct fuse_operations pseudo_oper = {
 	.getattr = pseudo_getattr,
+	.chmod = pseudo_chmod,
+	.chown = pseudo_chown,
+	.truncate = pseudo_truncate,
 	.open = pseudo_open,
 	.read = pseudo_read,
 	.write = pseudo_write,
