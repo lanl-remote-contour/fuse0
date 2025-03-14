@@ -291,6 +291,21 @@ static void pseudo_destroy(void *private_data)
 	free(state);
 }
 
+static int pseudo_utimens(const char *path, const struct timespec tv[2],
+			  struct fuse_file_info *fi)
+{
+	if (fi->fh != -1) {
+		int r = futimens(fi->fh, tv);
+		if (r != 0) {
+			return -1 * errno;
+		}
+	} else {
+		return -ENOENT;
+	}
+
+	return 0;
+}
+
 static const struct fuse_operations pseudo_oper = {
 	.getattr = pseudo_getattr,
 	.chmod = pseudo_chmod,
@@ -307,6 +322,7 @@ static const struct fuse_operations pseudo_oper = {
 	.readdir = pseudo_readdir,
 	.init = pseudo_init,
 	.destroy = pseudo_destroy,
+	.utimens = pseudo_utimens,
 };
 
 int main(int argc, char *argv[])
