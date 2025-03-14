@@ -171,14 +171,16 @@ static int pseudo_setxattr(const char *path, const char *name,
 			   const char *value, size_t size, int flags)
 {
 	if (strcmp(path + 1, "command") == 0) {
-		int r = setxattr(path, "/dev/shm/pushdown_command", value, size,
-				 flags);
+		struct global_state *state =
+			(struct global_state *)fuse_get_context()->private_data;
+		int r = fsetxattr(state->command_fd, name, value, size, flags);
 		if (r != 0) {
 			return -1 * errno;
 		}
 	} else if (strcmp(path + 1, "result") == 0) {
-		int r = setxattr(path, "/dev/shm/pushdown_res", value, size,
-				 flags);
+		struct global_state *state =
+			(struct global_state *)fuse_get_context()->private_data;
+		int r = fsetxattr(state->res_fd, name, value, size, flags);
 		if (r != 0) {
 			return -1 * errno;
 		}
@@ -193,14 +195,16 @@ static int pseudo_getxattr(const char *path, const char *name, char *value,
 			   size_t size)
 {
 	if (strcmp(path + 1, "command") == 0) {
-		ssize_t r = getxattr(path, "/dev/shm/pushdown_command", value,
-				     size);
+		struct global_state *state =
+			(struct global_state *)fuse_get_context()->private_data;
+		ssize_t r = fgetxattr(state->command_fd, name, value, size);
 		if (r == -1) {
 			return -1 * errno;
 		}
 	} else if (strcmp(path + 1, "result") == 0) {
-		ssize_t r =
-			getxattr(path, "/dev/shm/pushdown_res", value, size);
+		struct global_state *state =
+			(struct global_state *)fuse_get_context()->private_data;
+		ssize_t r = fgetxattr(state->res_fd, name, value, size);
 		if (r == -1) {
 			return -1 * errno;
 		}
