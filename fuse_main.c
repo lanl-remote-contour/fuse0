@@ -53,8 +53,17 @@ static int pseudo_getattr(const char *path, struct stat *stbuf,
 static int pseudo_chmod(const char *path, mode_t mode,
 			struct fuse_file_info *fi)
 {
-	if (fi->fh != -1) {
-		int r = fchmod(fi->fh, mode);
+	if (strcmp(path + 1, "command") == 0) {
+		struct global_state *state =
+			(struct global_state *)fuse_get_context()->private_data;
+		int r = fchmod(state->command_fd, mode);
+		if (r != 0) {
+			return -1 * errno;
+		}
+	} else if (strcmp(path + 1, "result") == 0) {
+		struct global_state *state =
+			(struct global_state *)fuse_get_context()->private_data;
+		int r = fchmod(state->res_fd, mode);
 		if (r != 0) {
 			return -1 * errno;
 		}
@@ -68,8 +77,17 @@ static int pseudo_chmod(const char *path, mode_t mode,
 static int pseudo_chown(const char *path, uid_t uid, gid_t gid,
 			struct fuse_file_info *fi)
 {
-	if (fi->fh != -1) {
-		int r = fchown(fi->fh, uid, gid);
+	if (strcmp(path + 1, "command") == 0) {
+		struct global_state *state =
+			(struct global_state *)fuse_get_context()->private_data;
+		int r = fchown(state->command_fd, uid, gid);
+		if (r != 0) {
+			return -1 * errno;
+		}
+	} else if (strcmp(path + 1, "result") == 0) {
+		struct global_state *state =
+			(struct global_state *)fuse_get_context()->private_data;
+		int r = fchown(state->res_fd, uid, gid);
 		if (r != 0) {
 			return -1 * errno;
 		}
@@ -83,8 +101,17 @@ static int pseudo_chown(const char *path, uid_t uid, gid_t gid,
 static int pseudo_truncate(const char *path, off_t off,
 			   struct fuse_file_info *fi)
 {
-	if (fi->fh != -1) {
-		int r = ftruncate(fi->fh, off);
+	if (strcmp(path + 1, "command") == 0) {
+		struct global_state *state =
+			(struct global_state *)fuse_get_context()->private_data;
+		int r = ftruncate(state->command_fd, off);
+		if (r != 0) {
+			return -1 * errno;
+		}
+	} else if (strcmp(path + 1, "result") == 0) {
+		struct global_state *state =
+			(struct global_state *)fuse_get_context()->private_data;
+		int r = ftruncate(state->res_fd, off);
 		if (r != 0) {
 			return -1 * errno;
 		}
@@ -294,8 +321,17 @@ static void pseudo_destroy(void *private_data)
 static int pseudo_utimens(const char *path, const struct timespec tv[2],
 			  struct fuse_file_info *fi)
 {
-	if (fi->fh != -1) {
-		int r = futimens(fi->fh, tv);
+	if (strcmp(path + 1, "command") == 0) {
+		struct global_state *state =
+			(struct global_state *)fuse_get_context()->private_data;
+		int r = futimens(state->command_fd, tv);
+		if (r != 0) {
+			return -1 * errno;
+		}
+	} else if (strcmp(path + 1, "result") == 0) {
+		struct global_state *state =
+			(struct global_state *)fuse_get_context()->private_data;
+		int r = futimens(state->res_fd, tv);
 		if (r != 0) {
 			return -1 * errno;
 		}
