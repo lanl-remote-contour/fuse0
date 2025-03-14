@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <sys/xattr.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 struct global_state {
@@ -159,6 +161,56 @@ static int pseudo_release(const char *path, struct fuse_file_info *fi)
 	}
 }
 
+static int pseudo_fsync(const char *path, int datasync,
+			struct fuse_file_info *fi)
+{
+	return pseudo_flush(path, fi);
+}
+
+static int pseudo_setxattr(const char *path, const char *name,
+			   const char *value, size_t size, int flags)
+{
+	if (strcmp(path + 1, "command") == 0) {
+		int r = setxattr(path, "/dev/shm/pushdown_command", value, size,
+				 flags);
+		if (r != 0) {
+			return -1 * errno;
+		}
+	} else if (strcmp(path + 1, "result") == 0) {
+		int r = setxattr(path, "/dev/shm/pushdown_res", value, size,
+				 flags);
+		if (r != 0) {
+			return -1 * errno;
+		}
+	} else {
+		return -ENOENT;
+	}
+
+	return 0;
+}
+
+static int pseudo_getxattr(const char *path, const char *name, char *value,
+			   size_t size)
+{
+	if (strcmp(path + 1, "command") == 0) {
+		ssize_t r = getxattr(path, "/dev/shm/pushdown_command", value,
+				     size);
+		if (r == -1) {
+			return -1 * errno;
+		}
+	} else if (strcmp(path + 1, "result") == 0) {
+		ssize_t r =
+			getxattr(path, "/dev/shm/pushdown_res", value, size);
+		if (r == -1) {
+			return -1 * errno;
+		}
+	} else {
+		return -ENOENT;
+	}
+
+	return 0;
+}
+
 static void *pseudo_init(struct fuse_conn_info *conn, struct fuse_config *cfg)
 {
 	cfg->kernel_cache = 0;
@@ -197,6 +249,9 @@ static const struct fuse_operations pseudo_oper = {
 	.write = pseudo_write,
 	.flush = pseudo_flush,
 	.release = pseudo_release,
+	.fsync = pseudo_fsync,
+	.setxattr = pseudo_setxattr,
+	.getxattr = pseudo_getxattr,
 	.readdir = pseudo_readdir,
 	.init = pseudo_init,
 	.destroy = pseudo_destroy,
