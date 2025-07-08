@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(fuse0 C CXX)
-
-set(CMAKE_CXX_STANDARD 20)
+project(fuse0 C)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(fuse3 REQUIRED IMPORTED_TARGET fuse3)
