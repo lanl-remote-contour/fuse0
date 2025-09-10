@@ -1,3 +1,5 @@
+**A virtual FUSE filesystem for secure in-storage data computation**
+
 Pushdown FUSE
 ================
 
@@ -57,13 +59,15 @@ After mounting the FUSE filesystem, configure the Linux kernel to export it to r
 sudo exportfs -av
 ```
 
-The FUSE mount provides command and result files that remote clients use to offload work to the NFS server. A client issues a request by writing instructions to the command file; this write blocks until the server finishes executing the requested work. The results are then retrieved from the result files.
+The FUSE mount provides command and result files that remote clients use to offload work to the NFS server. A client issues a request by writing instructions to the command file; this write blocks until the server finishes executing the requested work. The results are then retrieved from the result files. Please see our paper for more information.
 
-On the server side, the work is carried out by launching an executable called `Offloader`, which takes the contents of the command file as input arguments and writes its outputs to designated result files. Interpretation of the command file’s contents is delegated entirely to the offloader. The FUSE mount does not parse either the input or the output; it simply forwards client input to the offloader and returns the offloader’s output to the clients.
+On the server side, the work is carried out by launching (`execvp`) an executable called `Offloader`, which takes the contents of the command file as input arguments and writes its outputs to designated result files. Interpretation of the command file’s contents is delegated entirely to the offloader. The FUSE mount does not parse either the input or the output; it simply forwards client input to the offloader and returns the offloader’s output to the clients.
+
+The offloader should run under the `uid` and `gid` of the user issuing the write operation to enforce standard filesystem permission checks. This can be done by retrieving the user's effective uid and gid via `fuse_get_context` and applying `setuid` and `setgid` in the child process after invoking `execvp`. The current implementation does not yet support this behavior; we leave it to future work.
 
 The FUSE mount invokes the `Offloader` executable without prepending any path, so the binary must reside in a system directory such as `/bin` or `/usr/bin`. In the current implementation, the command and result files are statically created at mount time and shared by all clients. Adding support for dynamically created, per-client files is left to future work.
 
-Both the command and result files use fixed names, as shown below. The current implementation fixes the number of result files at three, which the clients cannot change dynamically. Support for configurable number of files is left to future work.
+Both the command and result files use fixed names, as shown below. The current implementation fixes the number of result files at three, which the clients cannot change dynamically. Support for configurable number of result files is left to future work.
 
 ```
 root@h1:~# ls /fuse
