@@ -25,6 +25,7 @@ We need a recent c++ compiler, cmake, pkgconf, libfuse3, and nfs utilities.
 On ubuntu, these can be installed as below.
 
 ```bash
+sudo apt update
 sudo apt install build-essential cmake cmake-curses-gui pkg-config fuse3 libfuse3-dev nfs-kernel-server nfs-common
 ```
 
@@ -56,7 +57,20 @@ After mounting the FUSE filesystem, configure the Linux kernel to export it to r
 sudo exportfs -av
 ```
 
-To tear down, first remove (or comment) the line in `/etc/export`. Then run the following commands to un-export the FUSE mount point and umount the FUSE.
+The FUSE mount provides command and result files that remote clients use to offload work to the NFS server. A client issues a request by writing instructions to the command file; this write blocks until the server finishes executing the requested work. The results are then retrieved from the result files.
+
+On the server side, the work is carried out by launching an executable called `Offloader`, which takes the contents of the command file as input arguments and writes its outputs to designated result files. Interpretation of the command file’s contents is delegated entirely to the offloader. The FUSE mount does not parse either the input or the output; it simply forwards client input to the offloader and returns the offloader’s output to the clients.
+
+The FUSE mount invokes the `Offloader` executable without prepending any path, so the binary must reside in a system directory such as `/bin` or `/usr/bin`. In the current implementation, the command and result files are statically created at mount time and shared by all clients. Adding support for dynamically created, per-client files is left to future work.
+
+Both the command and result files use fixed names, as shown below. The current implementation fixes the number of result files at three, which the clients cannot change dynamically. Support for configurable number of files is left to future work.
+
+```
+root@h1:~# ls /fuse
+command  res0  res1  res2
+```
+
+To tear down, first remove (or comment) the line we added before in `/etc/export`. Then run the following commands to un-export the FUSE mount point and umount the FUSE.
 
 ```bash
 sudo exportfs -r
