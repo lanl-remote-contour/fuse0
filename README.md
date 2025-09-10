@@ -63,7 +63,7 @@ The FUSE mount provides command and result files that remote clients use to offl
 
 On the server side, the work is carried out by launching (`execvp`) an executable called `Offloader`, which takes the contents of the command file as input arguments and writes its outputs to designated result files. Interpretation of the command file’s contents is delegated entirely to the offloader. The FUSE mount does not parse either the input or the output; it simply forwards client input to the offloader and returns the offloader’s output to the clients.
 
-The offloader should run under the `uid` and `gid` of the user issuing the write operation to enforce standard filesystem permission checks. This can be done by retrieving the user's effective uid and gid via `fuse_get_context` and applying `setuid` and `setgid` in the child process after invoking `execvp`. The current implementation does not yet support this behavior; we leave it to future work.
+The offloader should run under the `uid` and `gid` of the user issuing the write operation to enforce standard filesystem permission checks. This can be done by retrieving the user's effective uid and gid via `fuse_get_context` and applying `setuid` and `setgid` in the child process after invoking `execvp`. The current implementation does not yet feature this behavior; we leave it to future work.
 
 The FUSE mount invokes the `Offloader` executable without prepending any path, so the binary must reside in a system directory such as `/bin` or `/usr/bin`. In the current implementation, the command and result files are statically created at mount time and shared by all clients. Adding support for dynamically created, per-client files is left to future work.
 
@@ -85,4 +85,6 @@ sudo umount /fuse
 
 This codebase is authored by an employee of Triad National Security, LLC which operates Los Alamos National Laboratory for the U.S. Department of Energy/National Nuclear Security Administration.
 
+This code is associated with the paper:
 
+Qing Zheng, Brian Atkinson, Jason Lee, Daoce Wang, and Gary Grider. 2025. Secure In-Storage Execution of VTK Workloads on Modern Parallel NFS Data Servers. In Workshops of the International Conference for High Performance Computing, Networking, Storage and Analysis (SC Workshops '25), November 16–21, 2025, St Louis, MO, USA. ACM, New York, NY, USA, 7 pages. https://doi.org/10.1145/3731599.3767510.
